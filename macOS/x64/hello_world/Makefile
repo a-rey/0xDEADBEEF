@@ -18,7 +18,7 @@ clean:
 
 debug: $(TARGET)
 	objdump -d -M intel -j .text $(TARGET)
-	cat $(BIN_FILE) | sed 's/\\x//g' | python ../../../shellcode_test.py
+	python ../../../test.py $(BIN_FILE)
 
 $(TARGET): $(OBJ_FILES)
 	$(LD) $(LDFLAGS) -o $(TARGET) $(OBJ_FILES)
