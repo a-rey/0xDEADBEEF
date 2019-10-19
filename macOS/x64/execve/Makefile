@@ -1,4 +1,4 @@
-TARGET=hello_world
+TARGET=execve
 
 # compilation targets
 SRC_FILES:=$(shell find . -name *.asm)
