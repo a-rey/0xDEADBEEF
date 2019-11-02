@@ -1,4 +1,4 @@
-TARGET=hello_world
+TARGET=execve
 
 # compilation targets
 OBJ_FILE=$(TARGET:%=%.o)
