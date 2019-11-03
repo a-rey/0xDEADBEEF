@@ -8,6 +8,9 @@ Each shellcode payload directory has a `.asm` file with the shellcode and a test
 ## References
 
 - macOS:
-  - [System call table](https://opensource.apple.com/source/xnu/xnu-2782.20.48/bsd/kern/syscalls.master)
+  - [System Call Table](https://opensource.apple.com/source/xnu/xnu-2782.20.48/bsd/kern/syscalls.master)
 - linux
-  - [System call table](https://syscalls.kernelgrok.com/)
+  - [System Call Arguments](https://syscalls.kernelgrok.com/)
+  - [x86/64 System Call Calling Conventions](https://stackoverflow.com/questions/2535989/what-are-the-calling-conventions-for-unix-linux-system-calls-on-i386-and-x86-6)
+  - [x86 System Call Table](https://elixir.free-electrons.com/linux/latest/source/arch/x86/entry/syscalls/syscall_32.tbl)
+  - [x64 System Call Table](https://elixir.free-electrons.com/linux/latest/source/arch/x86/entry/syscalls/syscall_64.tbl)
