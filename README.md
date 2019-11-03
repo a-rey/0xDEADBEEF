@@ -4,7 +4,7 @@ My collection of assembly
 
 ## Contents
 
-Each directory has a `.asm` file with the assembly and a test file. Execute the test file with `make test` or see a disassembly with `make print`.
+Each directory has an `.asm` file with the assembly and a corresponding test file. Execute the test file with `make test` or see a disassembly with `make print`.
 
 ## References
 

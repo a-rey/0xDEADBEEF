@@ -1,8 +1,6 @@
 ; non-NULL shellcode running /bin/sh and listening on port 6969
 ; -> change the port using Python:
 ;   $ python -c "import socket; print(hex(socket.htons(PORT)))"
-; -> get a list of sys_socket calls
-;   $ grep SYS_ /usr/include/linux/net.h
 global _start
 section .text
 

