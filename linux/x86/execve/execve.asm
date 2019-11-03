@@ -13,7 +13,3 @@ _start:
   xor  eax, eax
   mov  al, 0xb    ; eax = sys_execve syscall number
   int  0x80
-  ; exit(0)
-  xor  eax, eax
-  inc  eax        ; eax = sys_exit syscall number
-  int  0x80
