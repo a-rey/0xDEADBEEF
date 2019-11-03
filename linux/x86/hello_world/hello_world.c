@@ -10,8 +10,7 @@ unsigned char shellcode[] = "\x31\xc0\xb0\x04\x31\xdb\x43"
 
 int main(void) {
   printf("[*] shellcode length: %d\n", strlen(shellcode));
-  void(*f)() = (void *)shellcode;
-  f();
+  (*(void (*)())shellcode)();
   return 0;
 }
 
