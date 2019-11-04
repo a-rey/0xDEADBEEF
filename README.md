@@ -2,16 +2,11 @@
 
 My collection of assembly
 
-## Contents
+## Contents:
 
 Each directory has an `.asm` file with the assembly and a corresponding test file. Execute the test file with `make test` or see a disassembly with `make print`.
 
 ## Platform Notes:
-
-- macOS:
-  - 
-
-## References
 
 - macOS:
   - [System Call Table](https://opensource.apple.com/source/xnu/xnu-2782.20.48/bsd/kern/syscalls.master)
