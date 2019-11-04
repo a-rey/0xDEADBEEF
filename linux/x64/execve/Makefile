@@ -1,25 +1,28 @@
-TARGET=bind_shell
+TARGET=execve
 
 # compilation targets
 OBJ_FILE=$(TARGET:%=%.o)
-TST_FILE=$(TARGET:%=%.py)
+TST_FILE=$(TARGET:%=%.c)
 
 # compilation options
 AS=nasm
-ASFLAGS=-f macho64
+ASFLAGS=-f elf64
 LD=ld
-LDFLAGS=-macosx_version_min 10.7.0 -lSystem
+LDFLAGS=-m elf_x86_64
+CC=gcc
+CCFLAGS=-m64 -fno-stack-protector -z execstack
 
 all: $(TARGET)
 
 clean:
 	rm -f $(TARGET) $(OBJ_FILE)
 
-test: $(TARGET)
-	python3 $(TST_FILE)
+test:
+	$(CC) $(CCFLAGS) $(TST_FILE) -o $(TARGET)
+	./$(TARGET)
 
 print: $(TARGET)
-	objdump -D -j .text -M intel $(TARGET)
+	objdump -D -m i386:x86-64 -j .text -M intel $(TARGET)
 	objdump -d -j .text $(TARGET) | grep '[0-9a-f]:' | cut -f2 | grep -v 'file' | tr -d " \n" | sed 's/../\\x&/g' && printf "\n"
 
 $(TARGET): $(OBJ_FILE)
