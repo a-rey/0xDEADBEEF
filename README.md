@@ -29,6 +29,11 @@ int main() {
 }
 ```
 
+## Platform Notes:
+
+- macOS:
+  - 
+
 ## References
 
 - macOS:
