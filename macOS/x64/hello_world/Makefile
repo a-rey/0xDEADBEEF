@@ -25,7 +25,7 @@ print: $(OBJ_FILE)
 	$(OBJDUMP) -d -m i386 -j .text -M intel $(OBJ_FILE)
 	$(AS) -f bin $(ASM_FILE) -o $(BIN_FILE)
 	xxd -i $(BIN_FILE)
-	
+
 $(TARGET): $(OBJ_FILE)
 	$(LD) $(LDFLAGS) -o $(TARGET) $(OBJ_FILE)
 

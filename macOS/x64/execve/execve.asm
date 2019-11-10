@@ -1,4 +1,5 @@
 ; non-NULL shellcode
+BITS 64
 global start
 section .text
 
