@@ -16,8 +16,10 @@ Each directory has an `.asm` file with the assembly and a corresponding test fil
   - [x86 System Call Table](https://elixir.free-electrons.com/linux/latest/source/arch/x86/entry/syscalls/syscall_32.tbl)
   - [x64 System Call Table](https://elixir.free-electrons.com/linux/latest/source/arch/x86/entry/syscalls/syscall_64.tbl)
 - Windows:
+  - [x86 Calling Conventions](https://en.wikipedia.org/wiki/X86_calling_conventions#cdecl)
+  - [x64 Calling Conventions](https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention)
   - [Windows TEB](https://www.geoffchappell.com/studies/windows/win32/ntdll/structs/teb/index.htm)
-  - [Windows x86 TEB -> kernel32.dll GIF](https://idafchev.github.io/images/windows_shellcode/locate_dll1.gif)
+  - [x86 TEB -> kernel32.dll Translation](https://idafchev.github.io/images/windows_shellcode/locate_dll1.gif)
   - Environment Setup on Windows 10:
     - Enable Windows Subsystem for Linux (WSL):
     ```powershell
@@ -25,7 +27,7 @@ Each directory has an `.asm` file with the assembly and a corresponding test fil
     Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
     ```
     - Reboot machine
-    - Install WSL version from Microsoft Store
+    - Install Ubuntu WSL version from Microsoft Store
     - Enable OpenSSH Server:
     ```powershell
     # ran in an Administrator window
@@ -35,15 +37,15 @@ Each directory has an `.asm` file with the assembly and a corresponding test fil
     Start-Service sshd
     Set-Service -Name sshd -StartupType 'Automatic'
     ```
-    - SSH into Windows Box and start Bash shell from the `cmd.exe` prompt by running `powershell` then `bash`:
+    - SSH into Windows Box and start Bash shell from the `cmd.exe` prompt by running `powershell` then `bash`
     - Environment setup after installing Windows subsystem for linux (Ubuntu flavor):
     ```bash
-    # installs mingw cross-compiler into linux subsystem for compiling shellcode in a linux environment
+    # installs mingw cross-compiler into linux subsystem for compiling shellcode (more portable)
     sudo apt update
     sudo apt upgrade
     sudo apt install nasm make mingw-w64
     ```
-    - For testing, install [MinGW32](http://www.mingw.org/wiki/Getting_Started). Allows for debugging of shellcode (example):
+    - For testing/debugging, install [MinGW32](http://www.mingw.org/wiki/Getting_Started). Allows for debugging of shellcode (gdb example):
     ```bash
     # on a default install of MinGW32, gdb will be at /mnt/c/MinGW/bin/
     /mnt/c/MinGW/bin/gdb.exe MessageBox.exe
