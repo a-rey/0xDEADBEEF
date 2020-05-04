@@ -50,9 +50,8 @@ Each directory has an `.asm` file with the assembly and a corresponding test fil
     sudo apt upgrade
     sudo apt install nasm make mingw-w64
     ```
-    - For testing/debugging, install [MinGW32](http://www.mingw.org/wiki/Getting_Started). Allows for debugging of shellcode (gdb example):
-    ```bash
-    # on a default install of MinGW32, gdb will be at /mnt/c/MinGW/bin/
+    - For testing/debugging, install [MinGW32](http://www.mingw.org/wiki/Getting_Started). Allows for debugging of shellcode (on a default install of MinGW32, gdb will be at `/mnt/c/MinGW/bin/`):
+    ```
     /mnt/c/MinGW/bin/gdb.exe MessageBox.exe
     GNU gdb (GDB) 7.6.1
     ...
@@ -68,8 +67,6 @@ Each directory has an `.asm` file with the assembly and a corresponding test fil
     Breakpoint 1, 0x00403020 in shellcode ()
     (gdb)
     ```
-    
   - Fixing `Operation did not complete successfully because the file contains a virus` Windows error for testing shellcode:
-  
-    - Open the *Settings app* and go to the **Update & Security** section. In the left pane navigate to **Windows Defender** and in the right pane disable **Real-time protection**.
-
+    
+    - Open the _Settings app_ and go to the **Update & Security** section. In the left pane navigate to **Windows Defender** and in the right pane disable **Real-time protection**.
