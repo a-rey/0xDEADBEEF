@@ -59,11 +59,11 @@ Each directory has an `.asm` file with the assembly and a corresponding test fil
     $1 = 0x403020
     (gdb) b *0x403020
     Breakpoint 1 at 0x403020
-  (gdb) r
+    (gdb) r
     Starting program: MessageBox.exe
     [New Thread 4004.0x1514]
     [New Thread 4004.0x1dc4]
-  
+    
     Breakpoint 1, 0x00403020 in shellcode ()
     (gdb)
     ```
