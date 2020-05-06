@@ -6,9 +6,15 @@ My collection of assembly
 
 Each directory has an `.asm` file with the assembly and a corresponding test file. Execute the test file with `make test` or see a disassembly with `make print`.
 
+## TODO:
+
+- Add ARM support to Linux shellcode
+- Add a bind shell to Windows shellcode
+
 ## Platform Notes:
 
 - macOS:
+  
   - [System Call Table](https://opensource.apple.com/source/xnu/xnu-2782.20.48/bsd/kern/syscalls.master)
 - Linux:
   - [System Call Arguments](https://syscalls.kernelgrok.com/)
@@ -67,4 +73,5 @@ Each directory has an `.asm` file with the assembly and a corresponding test fil
     (gdb)
     ```
   - Fixing `Operation did not complete successfully because the file contains a virus` Windows error for testing shellcode:
+    
     - Open the _Settings app_ and go to the **Update & Security** section. In the left pane navigate to **Windows Defender** and in the right pane disable **Real-time protection**.
