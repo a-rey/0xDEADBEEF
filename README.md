@@ -2,9 +2,18 @@
 
 My collection of assembly
 
-## Contents:
+## Setup:
 
-Each directory has an `.asm` file with the assembly and a corresponding test file. Execute the test file with `make test` or see a disassembly with `make print`.
+```bash
+apt install nasm make mingw-w64 xxd
+```
+
+## Compile:
+
+- Each directory has an `.asm` file with the assembly. Build the `.asm` file and get the opcode bytes with `make print`.
+- **If** the directory has a `.c` file, copy the generated assembly bytes into it and build a test executable with `make test`.
+
+---
 
 ## Platform Notes:
 
@@ -22,6 +31,8 @@ Each directory has an `.asm` file with the assembly and a corresponding test fil
   - [x86 TEB to kernel32.dll Translation](https://idafchev.github.io/images/windows_shellcode/locate_dll1.gif)
   - [x86 Windows Syscall Numbers](https://j00ru.vexillium.org/syscalls/nt/32/)
   - [x64 Windows Syscall Numbers](https://j00ru.vexillium.org/syscalls/nt/64/)
+
+---
 
 ## Misc Environment Notes:
 
